@@ -1273,7 +1273,7 @@ const returnToDepot = (product, initialCommande) => {
  */
 
 exports.addFromMagasin = async (req, res, next) => {
-  const id = req.body.id;
+  const id = Number(req.body.id);
   const contenu = req.body.contenu;
   const sorte = req.body.sorte;
   const type = req.body.type;
@@ -1286,7 +1286,7 @@ exports.addFromMagasin = async (req, res, next) => {
     .transaction(async (t) => {
       if (contenu.length > 0) {
         for (const c of contenu) {
-          let product = await db.product.findByPk(c.id, { transaction: t });
+          let product = await db.product.findByPk(Number(c.id), { transaction: t });
           await db.product.update(
             {
               quantityBruteCVA: c.quantityBruteCVA,
@@ -1297,7 +1297,7 @@ exports.addFromMagasin = async (req, res, next) => {
               qttyspecificmirror: 0,
               qttbylitre: 0,
             },
-            { transaction: t, where: { id: c.id } }
+            { transaction: t, where: { id: Number(c.id) } }
           );
         }
       }
@@ -1331,7 +1331,7 @@ exports.updateObjectValue = (state, index, key, value) => {
 };
 
 exports.updateFromMagasin = async (req, res, next) => {
-  const id = req.body.id;
+  const id = Number(req.body.id);
   const contenu = req.body.contenu;
   const commander = req.body.commande;
   const sorte = req.body.sorte;
@@ -1448,7 +1448,7 @@ exports.updateFromMagasin = async (req, res, next) => {
             },
             {
               transaction: t,
-              where: { id: ex.id },
+              where: { id: Number(ex.id) },
             }
           );
         }
@@ -1465,7 +1465,7 @@ exports.updateFromMagasin = async (req, res, next) => {
           ad.datedecorrection = moment(new Date());
           let modifval = [];
           addmod.push(ad);
-          let product = await db.product.findByPk(ad.id, { transaction: t });
+          let product = await db.product.findByPk(Number(ad.id), { transaction: t });
           modifval = buy(ad);
           await db.product.update(
             {
@@ -1473,16 +1473,16 @@ exports.updateFromMagasin = async (req, res, next) => {
               quantityCCCVA: modifval.quantityCCCVA,
               condval: val.condval,
             },
-            { transaction: t, where: { id: product.id } }
+            { transaction: t, where: { id: Number(product.id) } }
           );
         }
       }
       if (missing.length > 0) {
         for (const m of missing) {
-          let product = await db.product.findByPk(m.id, { transaction: t });
+          let product = await db.product.findByPk(Number(m.id), { transaction: t });
           let index = commande.contenu.findIndex((p) => p.id == m.id);
           let initial = commande.contenu.find((p) => p.id == m.id);
-          let realproduct = await db.product.findByPk(m.id, {
+          let realproduct = await db.product.findByPk(Number(m.id), {
             transaction: t,
           });
           let val = mlSoldIncrement(
@@ -1542,7 +1542,7 @@ exports.updateFromMagasin = async (req, res, next) => {
           type: type,
           status: status,
         },
-        { transaction: t, where: { id: id } }
+        { transaction: t, where: { id: Number(id) } }
       );
     })
     .then(function (result) {
@@ -1857,12 +1857,12 @@ exports.deleteFromDepot = async (req, res, next) => {
   const contenu = req.body.contenu;
   await sequelize
     .transaction(async (t) => {
-      let commande = await db.commande.findByPk(req.body.id, {
+      let commande = await db.commande.findByPk(Number(req.body.id), {
         transaction: t,
       });
       if (contenu.length > 0) {
         for (const c of contenu) {
-          let product = await db.product.findByPk(c.id, { transaction: t });
+          let product = await db.product.findByPk(Number(c.id), { transaction: t });
           await product.increment(
             {
               quantity_brute: c.quantityParProductDepot,
@@ -3578,8 +3578,10 @@ function whenDeleteHandle(whendelete, realproduct, initialCommande) {
 }
 exports.getCommandeBetween2Dates = async (req, res) => {
   const { id, prices, type } = req.body;
+  console.log('inona',type);
   const recap = [];
-  if (type == 2) {
+  if (type != 'vente-magasin') {
+    console.log('mety ato');
     await sequelize.transaction(async (t) => {
       if (prices.length > 0) {
         for (const price of prices) {
@@ -3671,9 +3673,11 @@ exports.getCommandeBetween2Dates = async (req, res) => {
     });
   } else {
     await sequelize.transaction(async (t) => {
+    
       if (prices.length > 0) {
         for (const price of prices) {
           let commandes = [];
+          console.log(price.deb,price.fin)
           await db.commande
             .findAndCountAll({
               where: {
@@ -3685,11 +3689,30 @@ exports.getCommandeBetween2Dates = async (req, res) => {
               },
             })
             .then(async ({ rows, count }) => {
+            
               if (rows.length > 0) {
+                
                 for (const r of rows) {
-                  let contenu = r.contenu.slice();
+                /**  console.log('-----------debut commande--------------',r.dateCom,r.id,r.type)
+                  let contenu = [...r.contenu];
+                  let x = contenu.map(e => e.id);
+                  let index = x.indexOf(Number(id));
+                  if(index != -1){
+                    console.log('x',x)
+                    console.log('content',contenu[index])
+
+                    commandes.push({
+                      id: Number(r.id),
+                      contenu: contenu[index],
+                      date: r.dateCom
+                    })
+                  }
+                  console.log('-----------fin commande--------------') */
+                  let contenu = [...r.contenu];
                   contenu.forEach((con, index) => {
-                    if (con.id == id) {
+                    
+                    if (con.id == Number(id)) {
+                      console.log('con',index,id,con.id,con);
                       let lp = contenu[index].prixVente;
                       let lpcc = contenu[index].prixParCC;
                       let lpl = contenu[index].prixlitre;
@@ -3708,7 +3731,7 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                           ? contenu[index].prixlitre
                           : price.prixlitre * 1;
                       commandes.push({
-                        id: r.id,
+                        id: Number(r.id),
                         lastPrice: lp,
                         lastPriceCC: lpcc,
                         lastPriceLitre: lpl,
@@ -3725,32 +3748,33 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                             ? contenu[index].prixlitre
                             : price.prixlitre * 1,
                         contenu: contenu,
-                        createdAt: r.createdAt,
+                        createdAt: r.dateCom,
                       });
                     }
                   });
                 }
               }
               if (commandes.length > 0) {
-                console.log("has commandes", deduplicationList(commandes));
-                let notDupl = deduplicationList(commandes);
+                console.log("has commandes", commandes);
+               let notDupl = deduplicationList(commandes);
                 recap.push({
                   deb: price.deb,
                   fin: price.fin,
                   data: notDupl,
                 });
                 for (const com of notDupl) {
-                  await db.commande.update(
+                
+                 await db.commande.update(
                     {
                       contenu: com.contenu,
                     },
                     {
                       transaction: t,
-                      where: { id: com.id },
+                      where: { id: Number(com.id) },
                     }
                   );
                 }
-              }
+              } 
             })
             .catch(function (err) {
               console.log("NO!!!");
