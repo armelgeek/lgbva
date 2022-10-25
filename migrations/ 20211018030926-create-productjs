@@ -1,0 +1,94 @@
+'use strict';
+module.exports = {
+  up: async (queryInterface, Sequelize) => {
+    await queryInterface.createTable('Products', {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER
+      },
+
+      name:  {
+        type: Sequelize.STRING
+      },
+      prixVente: {
+        type: Sequelize.INTEGER
+      },
+      prixFournisseur:  {
+        type: Sequelize.INTEGER
+      },
+      prixVaccinateur: {
+        type: Sequelize.INTEGER
+      },
+      type: {
+        type: Sequelize.STRING
+      },
+      uniteMesure:  {
+        type: Sequelize.STRING
+      },
+      doseDefault: {
+        type: Sequelize.BIGINT
+      },
+      doseRestantEnMg:  {
+        type: Sequelize.BIGINT
+      },
+      qttByCC:  {
+        type: Sequelize.BIGINT
+      },
+      quantityBrute:  {
+        type: Sequelize.BIGINT
+      },
+      quantityParProduct:{
+        type:Sequelize.INTEGER
+      },
+      prixParCC: {
+        type: Sequelize.INTEGER
+      },
+      condml:{
+        type:Sequelize.FLOAT
+      },
+
+      condval:{
+        type:Sequelize.FLOAT
+      },
+      qttccpvente:{
+        type:Sequelize.FLOAT
+      },
+      quantityCC:{
+        type: Sequelize.INTEGER
+      },
+      categoryId: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'Categories',
+          key: 'id',
+          as: 'category',
+        }
+      },
+      fournisseurId: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'Fournisseurs',
+          key: 'id',
+          as: 'fournisseur',
+        }
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE
+      },
+      datePer: {
+        allowNull: false,
+        type: Sequelize.DATE
+      }
+    });
+  },
+  down: async (queryInterface, Sequelize) => {
+    await queryInterface.dropTable('Products');
+  }
+};

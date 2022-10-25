@@ -1,0 +1,47 @@
+'use strict';
+module.exports = {
+  up: async (queryInterface, Sequelize) => {
+    await queryInterface.createTable('Commandes', {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER
+      },
+      contenu: {
+        type: Sequelize.JSON
+      },
+      type:{
+        type:Sequelize.STRING
+      },
+      category:{
+        type:Sequelize.STRING
+      },
+      vaccinateurId:{
+        type:Sequelize.STRING
+      },
+      emprunterId:{
+        type:Sequelize.STRING
+      },
+      status:{
+        default:false,
+        type:Sequelize.BOOLEAN
+      },
+      dateCom:{
+        allowNull: false,
+        type: Sequelize.DATEONLY
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE
+      }
+    });
+  },
+  down: async (queryInterface, Sequelize) => {
+    await queryInterface.dropTable('Commandes');
+  }
+};

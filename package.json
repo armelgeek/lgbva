@@ -1,0 +1,78 @@
+{
+  "name": "LGBVA",
+  "productName": "LGBVA",
+  "version": "1.1.0",
+  "description": "Logiciel de gestion de cabinet veterinaire",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron index.js",
+    "lint": "echo \"No linting configured\"",
+    "build": "electron-builder build --win --publish never",
+    "deploy": "electron-builder build --win --publish always",
+    "publish:win:setup:x64": "electron-builder -w=nsis --x64 -p always",
+    "publish:win:setup:x86": "electron-builder -w=nsis --ia32 -p onTagOrDraft",
+    "publish:win:setup:arm64": "electron-builder -w=nsis --arm64 -p onTagOrDraft",
+    "publish:win:setup:x86_64": "electron-builder -w=nsis --x64 --ia32 -p onTagOrDraft",
+    "publish:linux:deb:x64:always": "electron-builder -l=deb --x64 -p always",
+    "publish:linux:deb:x64": "electron-builder -l=deb --x64 -p onTagOrDraft",
+    "publish:linux:deb:x86": "electron-builder -l=deb --ia32 -p onTagOrDraft",
+    "publish:linux:deb:arm64": "electron-builder -l=deb --arm64 -p onTagOrDraft",
+    "publish:linux:deb:armv7l": "electron-builder -l=deb --armv7l -p onTagOrDraft",
+    "publish:linux:appImage": "electron-builder -l=AppImage -p onTagOrDraft"
+  },
+  "keywords": [],
+  "author": {
+    "name": "Armel Wanes",
+    "email": "armelgeek5@gmail.com"
+  },
+  "license": "MIT",
+  "build": {
+    "appId": "mg.armelwanes.lgbva.app",
+    "productName": "LGBVA",
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "icon/icon.ico"
+    },
+    "win": {
+      "target": [
+        "NSIS"
+      ],
+      "icon": "icon/icon.ico"
+    }
+  },
+  "devDependencies": {
+    "electron": "^12.0.1",
+    "electron-builder": "^19.6.1",
+    "http-server": "^0.10.0"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "cls-hooked": "^4.2.2",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "ejs": "^2.5.6",
+    "electron-updater": "^4.3.1",
+    "encoding": "^0.1.13",
+    "express": "^4.17.1",
+    "express-jwt": "^6.1.0",
+    "express-validator": "^6.12.1",
+    "formidable": "^1.2.2",
+    "http-errors": "^1.8.0",
+    "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.21",
+    "morgan": "^1.10.0",
+    "mysql": "^2.13.0",
+    "mysql2": "^2.3.3",
+    "nodemailer": "^6.7.0",
+    "nodemon": "^2.0.12",
+    "query-string": "^7.0.1",
+    "sequelize": "^6.6.5",
+    "uuid": "^8.3.2"
+  }
+}

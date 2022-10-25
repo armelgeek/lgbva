@@ -1,0 +1,32 @@
+{
+  "development": {
+    "username": "root",
+    "password": "",
+    "database": "cmv",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "port": 3306
+  },
+
+  "test": {
+    "username": "postgres",
+    "password": null,
+    "database": "api",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "vawkcyphhoedti",
+    "password": "fc45fafb9ec8d4c900eac91e3bafb61ebf3484133061e049b1db24e2591c3287",
+    "database": "d1leueljteejfu",
+    "host": "ec2-54-156-24-159.compute-1.amazonaws.com",
+    "dialect": "postgres",
+    "port":5432,
+    "dialectOptions": {
+      "ssl": {
+        "require": true, 
+        "rejectUnauthorized": false
+      }
+    }
+  }
+}
