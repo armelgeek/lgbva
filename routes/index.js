@@ -5,11 +5,43 @@ const commandeController = require("../controllers/commande");
 const approvController = require("../controllers/approv");
 const userController = require("../controllers/user");
 const sortieDepotController = require("../controllers/sortiedepot");
+const authConfig = require("../config/auth.config")
 const bodyParser = require("body-parser");
+const jwt = require("jsonwebtoken");
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 router.get("/", (req, res) => res.send("This is root!"));
-
+router.get('/status', (req, res, next) => res.sendStatus(200));
+router.post("/signup", userController.signup);
+router.post("/signin", userController.signin);
+router.get("/create-admin", userController.createAdmin);
+/**router.use((req, res, next) => {
+  const token =
+    req.body.token || req.query.token || req.headers["x-access-token"];
+  if (token) {
+    jwt.verify(token, authConfig.secret, (err, decoded) => {
+      if (err) {
+        return res.status(403).send({
+          success: false,
+          rows: [],
+          error: "Failed to authenticate token.",
+        });
+      } else {
+        req.decoded = decoded;
+        next();
+      }
+    });
+  } else {
+    return res.status(403).send({
+      success: false,
+      rows: [],
+      error: "No token provided.",
+    });
+  }
+});**/
 router.get("/get-tdb-commande", commandeController.getCommandetdb);
+router.get("/get-tdb-by-product", commandeController.getCommandeTdbByProduct);
+
+router.get("/get-cmd-by-products", commandeController.getCommandeTdbByProducts);
 router.get("/vente-correction", commandeController.getVenteCorrection);
 router.post("/create-product",urlencodedParser, productController.createProduct);
 router.post("/update-product",urlencodedParser, productController.updateProduct);
@@ -28,8 +60,8 @@ router.put("/update-from-depot", urlencodedParser,commandeController.updateFromD
 router.delete("/delete-from-depot", commandeController.deleteFromDepot);
 
 router.post("/add-from-magasin",urlencodedParser, commandeController.addFromMagasin);
-
 router.put("/update-from-magasin",urlencodedParser, commandeController.updateFromMagasin);
+router.put("/update-price-from-magasin",urlencodedParser, commandeController.updatePriceFromMagasin);
 router.post("/delete-from-magasin", commandeController.deleteFromMagasin);
 router.post("/change-from-magasin", commandeController.changeFromMagasin);
 
@@ -54,14 +86,13 @@ router.get("/journal", commandeController.getCommande);
 router.get("/credit-vaccinateur", commandeController.getCreditVaccinateur);
 router.get("/benefices", commandeController.beneficeEntre2Dates);
 router.get("/reste-a-payer", commandeController.resteApayerEntre2Dates);
-
-router.post("/signup", userController.signup);
-router.post("/signin", userController.signin);
 router.get(
   "/sortie/depot/by/product",
   sortieDepotController.getSortieDepotActual
 );
 router.get("/recette/to/day", commandeController.getCommandeToDay);
-module.exports = router;
 router.post("/add-to-correction",urlencodedParser,commandeController.addToCorrection);
 router.post("/get-commande-bw",commandeController.getCommandeBetween2Dates);
+router.post("/update-many-commandes",commandeController.updateManyCommande);
+router.post("/update-price",commandeController.updatePrice);
+module.exports = router;

@@ -1555,7 +1555,28 @@ exports.updateFromMagasin = async (req, res, next) => {
       return next(err);
     });
 };
-
+exports.updatePriceFromMagasin = async (req,res,next)=>{
+  const id = Number(req.body.id);
+  const contenu = req.body.contenu;
+  await sequelize
+    .transaction(async (t) => {
+      await db.commande.update(
+        {
+          contenu: contenu
+        },
+        { transaction: t, where: { id: Number(id) } }
+      );
+    })
+    .then(function (result) {
+      res.send({
+        message: "Modification du prix avec success",
+      });
+    })
+    .catch(function (err) {
+      console.log("NO!!!");
+      return next(err);
+    });
+}
 exports.changeFromMagasin = async (req, res, next) => {
   const commandea = req.body.commande;
   await sequelize
@@ -1786,9 +1807,9 @@ exports.updateFromDepot = async (req, res, next) => {
               quantityBrute:
                 Number(product.quantityBrute) -
                   Number(ad.quantityParProductDepot) >=
-                0
+                  0
                   ? Number(product.quantityBrute) -
-                    Number(ad.quantityParProductDepot)
+                  Number(ad.quantityParProductDepot)
                   : 0,
               quantityParProduct: 0,
             },
@@ -2053,9 +2074,9 @@ exports.updateToMagasin = async (req, res, next) => {
             {
               quantityBrute:
                 Number(product.quantityBrute) - Number(ad.quantityParProduct) >=
-                0
+                  0
                   ? Number(product.quantityBrute) -
-                    Number(ad.quantityParProduct)
+                  Number(ad.quantityParProduct)
                   : 0,
               quantityBruteCVA:
                 Number(product.quantityBruteCVA) +
@@ -2095,9 +2116,9 @@ exports.updateToMagasin = async (req, res, next) => {
               quantityBruteCVA:
                 Number(product.quantityBruteCVA) -
                   Number(m.quantityParProduct) >=
-                0
+                  0
                   ? Number(product.quantityBruteCVA) -
-                    Number(m.quantityParProduct)
+                  Number(m.quantityParProduct)
                   : 0,
               quantityParProduct: 0,
             },
@@ -2146,9 +2167,9 @@ exports.deleteToMagasin = async (req, res, next) => {
               quantityBruteCVA:
                 Number(product.quantityBruteCVA) -
                   Number(c.quantityParProduct) >
-                0
+                  0
                   ? Number(product.quantityBruteCVA) -
-                    Number(c.quantityParProduct)
+                  Number(c.quantityParProduct)
                   : 0,
               quantityParProduct: 0,
             },
@@ -2754,8 +2775,8 @@ exports.addToCorrection = async (req, res, next) => {
                   ? c.quantityBruteCVA
                   : c.qttbylitre
                 : c.quantityParProduct == 0
-                ? c.quantityBruteCVA
-                : c.quantityParProduct,
+                  ? c.quantityBruteCVA
+                  : c.quantityParProduct,
               quantityCCCVA: c.qttByCC == 0 ? c.quantityCCCVA : c.qttByCC,
               condval: isSpecialProductHandle(c)
                 ? c.quantityParProduct == 0
@@ -3578,7 +3599,7 @@ function whenDeleteHandle(whendelete, realproduct, initialCommande) {
 }
 exports.getCommandeBetween2Dates = async (req, res) => {
   const { id, prices, type } = req.body;
-  console.log('inona',type);
+  console.log('inona', type);
   const recap = [];
   if (type != 'vente-magasin') {
     console.log('mety ato');
@@ -3603,20 +3624,20 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                   contenu.forEach((con, index) => {
                     if (con.id == id) {
                       let lp = contenu[index].prixFournisseur;
-                      contenu[index].prixFournisseur =  price.montant==undefined || price.montant * 1 == 0 || price.montant == ""
-                      ? contenu[index].prixFournisseur
-                      : price.montant * 1;
+                      contenu[index].prixFournisseur = price.montant == undefined || price.montant * 1 == 0 || price.montant == ""
+                        ? contenu[index].prixFournisseur
+                        : price.montant * 1;
 
                       approvs.push({
                         id: r.id,
                         lastPrice: lp,
-                        newPrice: price.montant==undefined || price.montant * 1 == 0 || price.montant == ""
-                        ? contenu[index].prixFournisseur
-                        : price.montant * 1,
+                        newPrice: price.montant == undefined || price.montant * 1 == 0 || price.montant == ""
+                          ? contenu[index].prixFournisseur
+                          : price.montant * 1,
                         lastPriceCC: 'no',
                         lastPriceLitre: 'no',
-                        newPriceCC:'no',
-                        newPriceLitre:'no',
+                        newPriceCC: 'no',
+                        newPriceLitre: 'no',
                         contenu: contenu,
                         remise: r.remise,
                         createdAt: r.createdAt,
@@ -3642,7 +3663,7 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                         com.contenu.map(
                           (product) =>
                             product.prixFournisseur *
-                              product.quantityParProduct -
+                            product.quantityParProduct -
                             product.remise
                         )
                       ),
@@ -3650,7 +3671,7 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                         com.contenu.map(
                           (product) =>
                             product.prixFournisseur *
-                              product.quantityParProduct -
+                            product.quantityParProduct -
                             product.remise
                         ),
                         com.remise
@@ -3673,11 +3694,11 @@ exports.getCommandeBetween2Dates = async (req, res) => {
     });
   } else {
     await sequelize.transaction(async (t) => {
-    
+
       if (prices.length > 0) {
         for (const price of prices) {
           let commandes = [];
-          console.log(price.deb,price.fin)
+          console.log(price.deb, price.fin)
           await db.commande
             .findAndCountAll({
               where: {
@@ -3689,45 +3710,45 @@ exports.getCommandeBetween2Dates = async (req, res) => {
               },
             })
             .then(async ({ rows, count }) => {
-            
-              if (rows.length > 0) {
-                
-                for (const r of rows) {
-                /**  console.log('-----------debut commande--------------',r.dateCom,r.id,r.type)
-                  let contenu = [...r.contenu];
-                  let x = contenu.map(e => e.id);
-                  let index = x.indexOf(Number(id));
-                  if(index != -1){
-                    console.log('x',x)
-                    console.log('content',contenu[index])
 
-                    commandes.push({
-                      id: Number(r.id),
-                      contenu: contenu[index],
-                      date: r.dateCom
-                    })
-                  }
-                  console.log('-----------fin commande--------------') */
+              if (rows.length > 0) {
+
+                for (const r of rows) {
+                  /**  console.log('-----------debut commande--------------',r.dateCom,r.id,r.type)
+                    let contenu = [...r.contenu];
+                    let x = contenu.map(e => e.id);
+                    let index = x.indexOf(Number(id));
+                    if(index != -1){
+                      console.log('x',x)
+                      console.log('content',contenu[index])
+  
+                      commandes.push({
+                        id: Number(r.id),
+                        contenu: contenu[index],
+                        date: r.dateCom
+                      })
+                    }
+                    console.log('-----------fin commande--------------') */
                   let contenu = [...r.contenu];
                   contenu.forEach((con, index) => {
-                    
+
                     if (con.id == Number(id)) {
-                      console.log('con',index,id,con.id,con);
+                      console.log('con', index, id, con.id, con);
                       let lp = contenu[index].prixVente;
                       let lpcc = contenu[index].prixParCC;
                       let lpl = contenu[index].prixlitre;
                       console.log("price", price.prixparcc);
                       contenu[index].prixVente =
-                      price.montant==undefined || price.montant * 1 == 0 || price.montant == ""
+                        price.montant == undefined || price.montant * 1 == 0 || price.montant == ""
                           ? contenu[index].prixVente
                           : price.montant * 1;
                       contenu[index].prixParCC =
-                      price.prixparcc==undefined || price.prixparcc * 1 == 0 || price.prixparcc == ""
+                        price.prixparcc == undefined || price.prixparcc * 1 == 0 || price.prixparcc == ""
                           ? contenu[index].prixParCC
                           : price.prixparcc * 1;
 
                       contenu[index].prixlitre =
-                      price.prixlitre==undefined || price.prixlitre * 1 == 0 || price.prixlitre == ""
+                        price.prixlitre == undefined || price.prixlitre * 1 == 0 || price.prixlitre == ""
                           ? contenu[index].prixlitre
                           : price.prixlitre * 1;
                       commandes.push({
@@ -3736,15 +3757,15 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                         lastPriceCC: lpcc,
                         lastPriceLitre: lpl,
                         newPrice:
-                        price.montant==undefined || price.montant * 1 == 0 || price.montant == ""
+                          price.montant == undefined || price.montant * 1 == 0 || price.montant == ""
                             ? contenu[index].prixVente
                             : price.montant * 1,
                         newPriceCC:
-                        price.prixparcc==undefined ||  price.prixparcc * 1 == 0 || price.prixparcc == ""
+                          price.prixparcc == undefined || price.prixparcc * 1 == 0 || price.prixparcc == ""
                             ? contenu[index].prixParCC
                             : price.prixparcc * 1,
                         newPriceLitre:
-                        price.prixlitre==undefined ||  price.prixlitre * 1 == 0 || price.prixlitre == ""
+                          price.prixlitre == undefined || price.prixlitre * 1 == 0 || price.prixlitre == ""
                             ? contenu[index].prixlitre
                             : price.prixlitre * 1,
                         contenu: contenu,
@@ -3756,15 +3777,15 @@ exports.getCommandeBetween2Dates = async (req, res) => {
               }
               if (commandes.length > 0) {
                 console.log("has commandes", commandes);
-               let notDupl = deduplicationList(commandes);
+                let notDupl = deduplicationList(commandes);
                 recap.push({
                   deb: price.deb,
                   fin: price.fin,
                   data: notDupl,
                 });
                 for (const com of notDupl) {
-                
-                 await db.commande.update(
+
+                  await db.commande.update(
                     {
                       contenu: com.contenu,
                     },
@@ -3774,7 +3795,7 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                     }
                   );
                 }
-              } 
+              }
             })
             .catch(function (err) {
               console.log("NO!!!");
@@ -3823,4 +3844,137 @@ exports.getOperationCommandeCVA = async (req, res) => {
       10000
     )
   );
+};
+
+exports.getCommandeTdbByProduct = async (req, res) => {
+  var whereStatement = {};
+  if (req.query.type == "vente-cva") {
+    whereStatement.type = [req.query.type, "credit-cva"];
+  } else {
+    whereStatement.type = req.query.type;
+  }
+/** if (req.query.deb && req.query.fin) {
+     whereStatement.dateCom = {
+       [Op.gte]: moment(req.query.deb),
+       [Op.lte]: moment(req.query.fin),
+     };
+   } */
+  let {rows} = await res.respond(
+    db.commande.findAndCountAll({
+      where: whereStatement,
+    })
+  )
+
+  res.send({ nextId: 1, rows: rows, totalItems: 1000, totalPages: 100, currentPage: 0 });
+};
+exports.getCommandeTdbByProducts = async (req, res) => {
+  var whereStatement = {};
+
+  let cmd = [];
+  whereStatement.type = ["vente-cva", "credit-cva"];
+  if (req.query.deb && req.query.fin) {
+     whereStatement.dateCom = {
+       [Op.gte]: moment(req.query.deb),
+       [Op.lte]: moment(req.query.fin),
+     };
+   }
+   let x =await res.respond(
+    db.commande.findAndCountAll({
+      where: whereStatement,
+    })
+  ).then(async ({ rows, count }) => {
+    console.log('rows',rows);
+    for (const r of rows) {
+     let x = r.contenu.map(e => e.id);
+     let index = x.indexOf(Number(req.query.id));
+      if (index != -1) {
+     cmd.push({
+      id: r.id,
+      dateCom: r.dateCom,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      type: r.type,
+      status: r.status,
+      contenu: [r.contenu[index]]
+     });
+      }
+    };
+   
+  })
+    .catch(function (err) {
+      console.log("NO!!!");
+      console.log(err);
+    });
+
+
+  res.send({ nextId: 1,rows:cmd, totalItems: 1000, totalPages: 100, currentPage: 0 });
+};
+exports.updateManyCommande = async (req,res,next)=>{
+  console.log('commandes',req.body.commandes);
+  const {commandes} = req.body;
+  if(Array.isArray(commandes)){
+     await sequelize
+    .transaction(async (t) => {
+      if (commandes.length > 0) {
+        for (const c of commandes) {
+          await db.commande.update(
+            {
+              contenu: c.contenu
+            },
+            { transaction: t, where: { id: Number(c.id) } }
+          );
+        }
+      }
+    })
+    .then(function (result) {
+      res.send({
+        message: "Ok!!!",
+      });
+    })
+    .catch(function (err) {
+      console.log("NO!!!");
+      return next(err);
+    });
+  }
+ /** const id = Number(req.body.id);
+  const contenu = req.body.contenu;
+  await sequelize
+    .transaction(async (t) => {
+      await db.commande.update(
+        {
+          contenu: contenu
+        },
+        { transaction: t, where: { id: Number(id) } }
+      );
+    })
+    .then(function (result) {
+      res.send({
+        message: "Modification du prix avec success",
+      });
+    })
+    .catch(function (err) {
+      console.log("NO!!!");
+      return next(err);
+    });**/
+}
+
+
+exports.updatePrice = async (req, res, next) => {
+  const id = req.body.id;
+  const dateCom = req.body.dateCom;
+  console.log(id,dateCom);
+  await db.commande.update(
+        {
+          dateCom: dateCom,
+        },
+        {  where: { id: id } }
+      ).then(function (result) {
+        res.send({
+          message: "prix  mis à jour",
+        });
+    })
+    .catch(function (err) {
+      console.log("une erreur s'est produite !!!");
+      return next(err);
+    });
 };
