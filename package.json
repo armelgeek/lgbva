@@ -2,7 +2,7 @@
   "name": "LGBVA",
   "productName": "LGBVA",
   "version": "1.1.0",
-  "description": "Logiciel de gestion de cabinet veterinaire",
+  "description": "Logiciel de gestion de cabinet veterinaire ",
   "main": "index.js",
   "scripts": {
     "start": "electron index.js",
