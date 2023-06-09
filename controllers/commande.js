@@ -1,8 +1,10 @@
 const db = require("../models/index");
+const _ = require("lodash");
 const { getPagingData } = require("../lib/api/getList");
 const moment = require("moment");
 const { Op } = require("sequelize");
 const { sequelize } = require("../models/index");
+const ioModule = require("../ioModule");
 function copy(object) {
   var output, value, key;
   output = Array.isArray(object) ? [] : {};
@@ -20,10 +22,6 @@ const deduplicationList = (list) => {
     return true;
   });
 };
-const {
-  handleMinusCondML,
-  handleSoldQuantityCC,
-} = require("./utils/functions");
 const { buy, modifyBuy, correctionBuy } = require("./buy");
 const isSpecialProductHandle = (product) => {
   return !!(
@@ -1286,7 +1284,9 @@ exports.addFromMagasin = async (req, res, next) => {
     .transaction(async (t) => {
       if (contenu.length > 0) {
         for (const c of contenu) {
-          let product = await db.product.findByPk(Number(c.id), { transaction: t });
+          let product = await db.product.findByPk(Number(c.id), {
+            transaction: t,
+          });
           await db.product.update(
             {
               quantityBruteCVA: c.quantityBruteCVA,
@@ -1315,6 +1315,8 @@ exports.addFromMagasin = async (req, res, next) => {
       );
     })
     .then(function (result) {
+      const io = ioModule.getIO();
+      io.emit("refresh-data");
       res.send({
         message: "Ok!!!",
       });
@@ -1465,7 +1467,9 @@ exports.updateFromMagasin = async (req, res, next) => {
           ad.datedecorrection = moment(new Date());
           let modifval = [];
           addmod.push(ad);
-          let product = await db.product.findByPk(Number(ad.id), { transaction: t });
+          let product = await db.product.findByPk(Number(ad.id), {
+            transaction: t,
+          });
           modifval = buy(ad);
           await db.product.update(
             {
@@ -1479,7 +1483,9 @@ exports.updateFromMagasin = async (req, res, next) => {
       }
       if (missing.length > 0) {
         for (const m of missing) {
-          let product = await db.product.findByPk(Number(m.id), { transaction: t });
+          let product = await db.product.findByPk(Number(m.id), {
+            transaction: t,
+          });
           let index = commande.contenu.findIndex((p) => p.id == m.id);
           let initial = commande.contenu.find((p) => p.id == m.id);
           let realproduct = await db.product.findByPk(Number(m.id), {
@@ -1546,6 +1552,8 @@ exports.updateFromMagasin = async (req, res, next) => {
       );
     })
     .then(function (result) {
+      const io = ioModule.getIO();
+      io.emit("refresh-data");
       res.send({
         message: "Modification avec success",
       });
@@ -1555,19 +1563,21 @@ exports.updateFromMagasin = async (req, res, next) => {
       return next(err);
     });
 };
-exports.updatePriceFromMagasin = async (req,res,next)=>{
+exports.updatePriceFromMagasin = async (req, res, next) => {
   const id = Number(req.body.id);
   const contenu = req.body.contenu;
   await sequelize
     .transaction(async (t) => {
       await db.commande.update(
         {
-          contenu: contenu
+          contenu: contenu,
         },
         { transaction: t, where: { id: Number(id) } }
       );
     })
     .then(function (result) {
+      const io = ioModule.getIO();
+      io.emit("refresh-data");
       res.send({
         message: "Modification du prix avec success",
       });
@@ -1576,7 +1586,7 @@ exports.updatePriceFromMagasin = async (req,res,next)=>{
       console.log("NO!!!");
       return next(err);
     });
-}
+};
 exports.changeFromMagasin = async (req, res, next) => {
   const commandea = req.body.commande;
   await sequelize
@@ -1595,6 +1605,8 @@ exports.changeFromMagasin = async (req, res, next) => {
       );
     })
     .then(function (result) {
+      const io = ioModule.getIO();
+      io.emit("refresh-data");
       res.send({
         message: "changer avec success",
       });
@@ -1667,6 +1679,8 @@ exports.deleteFromMagasin = async (req, res, next) => {
       );
     })
     .then(function (result) {
+      const io = ioModule.getIO();
+      io.emit("refresh-data");
       res.send({
         message: "Suppresion avec success",
       });
@@ -1722,6 +1736,8 @@ exports.addFromDepot = async (req, res, next) => {
       );
     })
     .then(function (result) {
+      const io = ioModule.getIO();
+      io.emit("refresh-data");
       res.send({
         message: "Ok!!!",
       });
@@ -1807,9 +1823,9 @@ exports.updateFromDepot = async (req, res, next) => {
               quantityBrute:
                 Number(product.quantityBrute) -
                   Number(ad.quantityParProductDepot) >=
-                  0
+                0
                   ? Number(product.quantityBrute) -
-                  Number(ad.quantityParProductDepot)
+                    Number(ad.quantityParProductDepot)
                   : 0,
               quantityParProduct: 0,
             },
@@ -1864,6 +1880,8 @@ exports.updateFromDepot = async (req, res, next) => {
       );
     })
     .then(function (result) {
+      const io = ioModule.getIO();
+      io.emit("refresh-data");
       res.send({
         message: "commande mis a jour",
       });
@@ -1883,7 +1901,9 @@ exports.deleteFromDepot = async (req, res, next) => {
       });
       if (contenu.length > 0) {
         for (const c of contenu) {
-          let product = await db.product.findByPk(Number(c.id), { transaction: t });
+          let product = await db.product.findByPk(Number(c.id), {
+            transaction: t,
+          });
           await product.increment(
             {
               quantity_brute: c.quantityParProductDepot,
@@ -1906,6 +1926,8 @@ exports.deleteFromDepot = async (req, res, next) => {
       );
     })
     .then(function (result) {
+      const io = ioModule.getIO();
+      io.emit("refresh-data");
       res.send({
         message: "Suppresion avec success",
       });
@@ -1968,6 +1990,8 @@ exports.addToMagasin = async (req, res, next) => {
       );
     })
     .then(function (result) {
+      const io = ioModule.getIO();
+      io.emit("refresh-data");
       res.send({
         message: "Commande reussie",
       });
@@ -2074,9 +2098,9 @@ exports.updateToMagasin = async (req, res, next) => {
             {
               quantityBrute:
                 Number(product.quantityBrute) - Number(ad.quantityParProduct) >=
-                  0
+                0
                   ? Number(product.quantityBrute) -
-                  Number(ad.quantityParProduct)
+                    Number(ad.quantityParProduct)
                   : 0,
               quantityBruteCVA:
                 Number(product.quantityBruteCVA) +
@@ -2116,9 +2140,9 @@ exports.updateToMagasin = async (req, res, next) => {
               quantityBruteCVA:
                 Number(product.quantityBruteCVA) -
                   Number(m.quantityParProduct) >=
-                  0
+                0
                   ? Number(product.quantityBruteCVA) -
-                  Number(m.quantityParProduct)
+                    Number(m.quantityParProduct)
                   : 0,
               quantityParProduct: 0,
             },
@@ -2137,6 +2161,8 @@ exports.updateToMagasin = async (req, res, next) => {
       );
     })
     .then(function (result) {
+      const io = ioModule.getIO();
+      io.emit("refresh-data");
       res.send({
         message: "commande mis a jour",
       });
@@ -2167,9 +2193,9 @@ exports.deleteToMagasin = async (req, res, next) => {
               quantityBruteCVA:
                 Number(product.quantityBruteCVA) -
                   Number(c.quantityParProduct) >
-                  0
+                0
                   ? Number(product.quantityBruteCVA) -
-                  Number(c.quantityParProduct)
+                    Number(c.quantityParProduct)
                   : 0,
               quantityParProduct: 0,
             },
@@ -2191,6 +2217,8 @@ exports.deleteToMagasin = async (req, res, next) => {
       );
     })
     .then(function (result) {
+      const io = ioModule.getIO();
+      io.emit("refresh-data");
       res.send({
         message: "Suppresion avec success",
       });
@@ -2207,11 +2235,8 @@ exports.getCredit = async (req, res) => {
       await res.respond(
         db.commande.findAndCountAll({
           where: {
-            type: ["vente-depot-credit"],
-            dateCom: {
-              [Op.gte]: moment(req.query.deb),
-              [Op.lte]: moment(req.query.fin),
-            },
+            status: false,
+            type: ["vente-depot-credit", "credit-cva"],
           },
           include: ["emprunter"],
         })
@@ -2775,8 +2800,8 @@ exports.addToCorrection = async (req, res, next) => {
                   ? c.quantityBruteCVA
                   : c.qttbylitre
                 : c.quantityParProduct == 0
-                  ? c.quantityBruteCVA
-                  : c.quantityParProduct,
+                ? c.quantityBruteCVA
+                : c.quantityParProduct,
               quantityCCCVA: c.qttByCC == 0 ? c.quantityCCCVA : c.qttByCC,
               condval: isSpecialProductHandle(c)
                 ? c.quantityParProduct == 0
@@ -2881,6 +2906,9 @@ const decrementCond = (realproduct, qttcc) => {
     } else {
       realproduct.quantityCCCVA -= Number(qttcc);
     }
+  }
+  if (realproduct.quantityCCCVA < 0) {
+    realproduct.quantityCCCVA = 0;
   }
 };
 /**
@@ -3017,7 +3045,12 @@ const decrement = (realproduct, qttcc, qtt = 0, type = "dec") => {
     realproduct.quantityBruteCVA += moins;
     realproduct.quantityBruteCVA -= qtt;
   }
+
+  if (realproduct.quantityCCCVA < 0) {
+    realproduct.quantityCCCVA = 0;
+  }
 };
+
 function EgalSupNotP(realproduct, qttcc) {
   decrement(realproduct, qttcc);
 }
@@ -3045,7 +3078,7 @@ function SupEgalSup(diffl, product, initialCommande, realproduct) {
   diffl = Number(product.qttbylitre) - Number(initialCommande.qttbylitre);
   initialCommande.correctionl = diffl;
   initialCommande.qttbylitre = Number(initialCommande.qttbylitre) + diffl;
-  if (realproduct.quantityBruteCVA - diffl > 0) {
+  if (realproduct.quantityBruteCVA - diffl >= 0) {
     realproduct.quantityBruteCVA -= diffl;
   } else {
     realproduct.quantityBruteCVA = 0;
@@ -3071,12 +3104,16 @@ function SupSup(realproduct, diffcc, diff) {
 
 function EgalInf(realproduct, diffcc) {
   if (realproduct.quantityCCCVA - diffcc >= 0) {
-    realproduct.quantityCCCVA - diffcc;
+    realproduct.quantityCCCVA -= diffcc;
   } else {
     if (realproduct.quantityBruteCVA - 1 > 0) {
-      let difference = diffcc + realproduct.quantityCCVA;
+      let difference = diffcc + realproduct.quantityCCCVA;
       realproduct.quantityBruteCVA -= 1;
-      realproduct.quantityCCVA = realproduct.doseDefault - difference;
+      if (realproduct.doseDefault - difference >= 0) {
+        realproduct.quantityCCCVA = realproduct.doseDefault - difference;
+      } else {
+        realproduct.quantityCCCVA = 0; // ou toute autre logique appropriée en cas de dépassement de la dose
+      }
     }
   }
 }
@@ -3085,8 +3122,12 @@ function EgalSup(initialCommande, diffcc, realproduct) {
   if (realproduct.quantityCCVA - diffcc < 0) {
     if (realproduct.quantityBruteCVA - 1 > 0) {
       realproduct.quantityBruteCVA -= 1;
-      realproduct.quantityCCVA =
-        realproduct.doseDefault - diffcc - realproduct.quantityCCVA;
+      let difference = diffcc - realproduct.quantityCCVA;
+      if (realproduct.doseDefault - difference >= 0) {
+        realproduct.quantityCCVA = realproduct.doseDefault - difference;
+      } else {
+        realproduct.quantityCCVA = 0; // ou toute autre logique appropriée en cas de dépassement de la dose
+      }
     }
   } else {
     realproduct.quantityCCVA -= diffcc;
@@ -3126,7 +3167,13 @@ function InferLitre(
   diff
 ) {
   diffl = initialCommande.qttbylitre - product.qttbylitre;
-  realproduct.quantityBruteCVA += diffl;
+  if (diffl >= 0) {
+    realproduct.quantityBruteCVA += diffl;
+  } else {
+    // Gérer le cas où diffl est négatif (à votre convenance)
+    // Par exemple, réinitialiser la quantité brute à zéro ou prendre une autre action appropriée.
+    realproduct.quantityBruteCVA = 0;
+  }
   //etoo
 }
 function InfSupSupPhyto(
@@ -3154,6 +3201,19 @@ function SupInfInfPhyto(
   diff
 ) {
   diffl = Number(product.qttbylitre) - Number(initialCommande.qttbylitre);
+
+  if (diffl >= 0) {
+    initialCommande.qttbylitre = Number(initialCommande.qttbylitre) + diffl;
+    if (realproduct.quantityBruteCVA - diffl > 0) {
+      realproduct.quantityBruteCVA -= diffl;
+    } else {
+      realproduct.quantityBruteCVA = 0;
+    }
+  } else {
+    initialCommande.qttbylitre = 0;
+    realproduct.quantityBruteCVA = 0;
+  }
+
   initialCommande.qttbylitre = Number(initialCommande.qttbylitre) + diffl;
   if (realproduct.quantityBruteCVA - diffl > 0) {
     realproduct.quantityBruteCVA -= diffl;
@@ -3256,7 +3316,7 @@ function SupSupInfPhyto(initialCommande, diffl, product, realproduct, diffcc) {
   }
   if (realproduct.quantityCCCVA + diffcc > realproduct.condml) {
     realproduct.condval += 1;
-    real.quantityCCCVA =
+    realproduct.quantityCCCVA =
       realproduct.quantityCCCVA + diffcc - realproduct.condml;
   } else {
     realproduct.quantityCCCVA += diffcc;
@@ -3365,7 +3425,7 @@ function EgalInfSupPhyto(realproduct, diffcc) {
 function EgalSupInfPhyto(realproduct, product, diffcc, diff) {
   if (realproduct.quantityCCCVA + diffcc > realproduct.condml) {
     realproduct.condval += 1;
-    real.quantityCCCVA =
+    realproduct.quantityCCCVA =
       realproduct.quantityCCCVA + diffcc - realproduct.condml;
   } else {
     realproduct.quantityCCCVA += diffcc;
@@ -3381,7 +3441,7 @@ function EgalSupInfPhyto(realproduct, product, diffcc, diff) {
 }
 
 function EgalSupSupPhyto(realproduct, product, diffcc, diff) {
-  let diffoc = 0;
+  // let diffoc = 0;
   if (realproduct.condval - 1 >= 0) {
     realproduct.condval -= 1;
   } else {
@@ -3422,6 +3482,7 @@ function EgalInfInfPhyto(realproduct, product, diffcc, diff) {
   let diffoc = 0;
 
   realproduct.qttbylitre = Number(product.qttbylitre);
+
   if (realproduct.quantityCCCVA + diffcc > product.condml) {
     if (realproduct.condval + 1 > realproduct.condsize) {
       diffoc += 1;
@@ -3433,26 +3494,16 @@ function EgalInfInfPhyto(realproduct, product, diffcc, diff) {
 
   if (realproduct.condval + diff + diffoc > realproduct.condsize) {
     if (realproduct.quantityBruteCVA - 1 >= 0) {
-      realproduct.condval =
-        realproduct.condval + diff + diffoc - realproduct.condsize;
-      if (
-        realproduct.condval + diff + diffoc - realproduct.condsize >
-        realproduct.condsize
-      ) {
-        let diffo = realproduct.condval + diff + diffoc - realproduct.condsize;
-        realproduct.condval = realproduct.condsize - diffo;
-      }
+      let excess = realproduct.condval + diff + diffoc - realproduct.condsize;
+      realproduct.condval = realproduct.condsize - excess;
       realproduct.quantityBruteCVA -= 1;
       realproduct.quantityCCCVA =
-        Number(realproduct.condml) -
-        (diffcc - Number(realproduct.quantityCCCVA));
+        Number(realproduct.condml) - diffcc + Number(realproduct.quantityCCCVA);
     } else {
       realproduct.condval = 0;
     }
   } else {
-    let difdif = diff + diffoc;
-    console.log(diff);
-    realproduct.condval += difdif;
+    realproduct.condval += diff + diffoc;
   }
 }
 
@@ -3461,7 +3512,7 @@ function InfEgalEgalPhyto(diffl, initialCommande, product, realproduct) {
   initialCommande.correctionl = diffl;
   realproduct.qttbylitre = Number(product.qttbylitre);
   // 90 - 20 = 70
-  if (initialCommande.qttbylitre - diffl < 0) {
+  if (initialCommande.qttbylitre - diffl <= 0) {
     initialCommande.qttbylitre = 0;
   } else {
     initialCommande.qttbylitre -= diffl;
@@ -3493,6 +3544,10 @@ function EgalInfEgalPhyto(realproduct, diff) {
     if (realproduct.quantityBruteCVA - 1 >= 0) {
       realproduct.condval = realproduct.condsize - 1;
       realproduct.quantityBruteCVA -= 1;
+    } else {
+      // Gérer le cas où realproduct.quantityBruteCVA - 1 < 0
+      // Ajoutez ici le code approprié pour traiter cette situation
+      realproduct.quantityBruteCVA = 0;
     }
   } else {
     realproduct.condval = Number(realproduct.condval) + diff;
@@ -3506,6 +3561,10 @@ function EgaleSupEgalPhyto(realproduct, diff) {
       if (realproduct.quantityBruteCVA - 1 >= 0) {
         realproduct.condval = realproduct.condsize;
         realproduct.quantityBruteCVA -= 1;
+      } else {
+        // Gérer le cas où realproduct.quantityBruteCVA - 1 < 0
+        // Ajoutez ici le code approprié pour traiter cette situation
+        realproduct.quantityBruteCVA = 0;
       }
     } else {
       realproduct.condval = Number(realproduct.condval) + diff;
@@ -3525,6 +3584,9 @@ function SeulLaQuantiteCCDiminueEtLeLitreEtLeQttParProductEstLaMeme(
       if (realproduct.quantityBruteCVA - 1 > 0) {
         realproduct.quantityBruteCVA -= 1;
         realproduct.condval = realproduct.condsize - 1;
+      } else {
+        // Gérer le cas où realproduct.quantityBruteCVA - 1 < 0
+        // Ajoutez ici le code approprié pour traiter cette situation
       }
     } else {
       realproduct.condval = Number(realproduct.condval) + 1;
@@ -3540,16 +3602,12 @@ function SeulLaQuantiteCCDiminueEtLeLitreEtLeQttParProductEstLaMeme(
 
 function SeulLeCCAChangeLeLitreEtLaQttParCommandeSupEgal(realproduct, diffcc) {
   if (Number(realproduct.quantityCCCVA) - diffcc > 0) {
-    if (Number(realproduct.quantityCCCVA) - diffcc > 0) {
-      realproduct.quantityCCCVA = Number(realproduct.quantityCCCVA) - diffcc;
-    } else {
-      realproduct.quantityCCCVA = 0;
-    }
+    realproduct.quantityCCCVA = Number(realproduct.quantityCCCVA) - diffcc;
   } else {
     if (Number(realproduct.condval) > 0) {
       if (diffcc - Number(realproduct.quantityCCCVA) == 0) {
         realproduct.quantityCCCVA = 0;
-        //realproduct.condval = Number(realproduct.condval) - 1;
+        // realproduct.condval = Number(realproduct.condval) - 1;
       } else {
         if (Number(realproduct.condval) - 1 >= 0) {
           realproduct.condval = Number(realproduct.condval) - 1;
@@ -3557,9 +3615,13 @@ function SeulLeCCAChangeLeLitreEtLaQttParCommandeSupEgal(realproduct, diffcc) {
           if (realproduct.quantityBruteCVA - 1 >= 0) {
             realproduct.condval = realproduct.condsize - 1;
             realproduct.quantityBruteCVA -= 1;
+          } else {
+            realproduct.quantityBruteCVA = 0;
+            // Gérer le cas où realproduct.quantityBruteCVA - 1 < 0
+            // Ajoutez ici le code approprié pour traiter cette situation
           }
         }
-        //100 + (60-59)
+        // 100 + (60-59)
         realproduct.quantityCCCVA =
           Number(realproduct.condml) -
           (diffcc - Number(realproduct.quantityCCCVA));
@@ -3599,10 +3661,10 @@ function whenDeleteHandle(whendelete, realproduct, initialCommande) {
 }
 exports.getCommandeBetween2Dates = async (req, res) => {
   const { id, prices, type } = req.body;
-  console.log('inona', type);
+  console.log("inona", type);
   const recap = [];
-  if (type != 'vente-magasin') {
-    console.log('mety ato');
+  if (type != "vente-magasin") {
+    console.log("mety ato");
     await sequelize.transaction(async (t) => {
       if (prices.length > 0) {
         for (const price of prices) {
@@ -3624,20 +3686,26 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                   contenu.forEach((con, index) => {
                     if (con.id == id) {
                       let lp = contenu[index].prixFournisseur;
-                      contenu[index].prixFournisseur = price.montant == undefined || price.montant * 1 == 0 || price.montant == ""
-                        ? contenu[index].prixFournisseur
-                        : price.montant * 1;
+                      contenu[index].prixFournisseur =
+                        price.montant == undefined ||
+                        price.montant * 1 == 0 ||
+                        price.montant == ""
+                          ? contenu[index].prixFournisseur
+                          : price.montant * 1;
 
                       approvs.push({
                         id: r.id,
                         lastPrice: lp,
-                        newPrice: price.montant == undefined || price.montant * 1 == 0 || price.montant == ""
-                          ? contenu[index].prixFournisseur
-                          : price.montant * 1,
-                        lastPriceCC: 'no',
-                        lastPriceLitre: 'no',
-                        newPriceCC: 'no',
-                        newPriceLitre: 'no',
+                        newPrice:
+                          price.montant == undefined ||
+                          price.montant * 1 == 0 ||
+                          price.montant == ""
+                            ? contenu[index].prixFournisseur
+                            : price.montant * 1,
+                        lastPriceCC: "no",
+                        lastPriceLitre: "no",
+                        newPriceCC: "no",
+                        newPriceLitre: "no",
                         contenu: contenu,
                         remise: r.remise,
                         createdAt: r.createdAt,
@@ -3663,7 +3731,7 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                         com.contenu.map(
                           (product) =>
                             product.prixFournisseur *
-                            product.quantityParProduct -
+                              product.quantityParProduct -
                             product.remise
                         )
                       ),
@@ -3671,7 +3739,7 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                         com.contenu.map(
                           (product) =>
                             product.prixFournisseur *
-                            product.quantityParProduct -
+                              product.quantityParProduct -
                             product.remise
                         ),
                         com.remise
@@ -3694,11 +3762,10 @@ exports.getCommandeBetween2Dates = async (req, res) => {
     });
   } else {
     await sequelize.transaction(async (t) => {
-
       if (prices.length > 0) {
         for (const price of prices) {
           let commandes = [];
-          console.log(price.deb, price.fin)
+          console.log(price.deb, price.fin);
           await db.commande
             .findAndCountAll({
               where: {
@@ -3710,9 +3777,7 @@ exports.getCommandeBetween2Dates = async (req, res) => {
               },
             })
             .then(async ({ rows, count }) => {
-
               if (rows.length > 0) {
-
                 for (const r of rows) {
                   /**  console.log('-----------debut commande--------------',r.dateCom,r.id,r.type)
                     let contenu = [...r.contenu];
@@ -3731,24 +3796,29 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                     console.log('-----------fin commande--------------') */
                   let contenu = [...r.contenu];
                   contenu.forEach((con, index) => {
-
                     if (con.id == Number(id)) {
-                      console.log('con', index, id, con.id, con);
+                      console.log("con", index, id, con.id, con);
                       let lp = contenu[index].prixVente;
                       let lpcc = contenu[index].prixParCC;
                       let lpl = contenu[index].prixlitre;
                       console.log("price", price.prixparcc);
                       contenu[index].prixVente =
-                        price.montant == undefined || price.montant * 1 == 0 || price.montant == ""
+                        price.montant == undefined ||
+                        price.montant * 1 == 0 ||
+                        price.montant == ""
                           ? contenu[index].prixVente
                           : price.montant * 1;
                       contenu[index].prixParCC =
-                        price.prixparcc == undefined || price.prixparcc * 1 == 0 || price.prixparcc == ""
+                        price.prixparcc == undefined ||
+                        price.prixparcc * 1 == 0 ||
+                        price.prixparcc == ""
                           ? contenu[index].prixParCC
                           : price.prixparcc * 1;
 
                       contenu[index].prixlitre =
-                        price.prixlitre == undefined || price.prixlitre * 1 == 0 || price.prixlitre == ""
+                        price.prixlitre == undefined ||
+                        price.prixlitre * 1 == 0 ||
+                        price.prixlitre == ""
                           ? contenu[index].prixlitre
                           : price.prixlitre * 1;
                       commandes.push({
@@ -3757,15 +3827,21 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                         lastPriceCC: lpcc,
                         lastPriceLitre: lpl,
                         newPrice:
-                          price.montant == undefined || price.montant * 1 == 0 || price.montant == ""
+                          price.montant == undefined ||
+                          price.montant * 1 == 0 ||
+                          price.montant == ""
                             ? contenu[index].prixVente
                             : price.montant * 1,
                         newPriceCC:
-                          price.prixparcc == undefined || price.prixparcc * 1 == 0 || price.prixparcc == ""
+                          price.prixparcc == undefined ||
+                          price.prixparcc * 1 == 0 ||
+                          price.prixparcc == ""
                             ? contenu[index].prixParCC
                             : price.prixparcc * 1,
                         newPriceLitre:
-                          price.prixlitre == undefined || price.prixlitre * 1 == 0 || price.prixlitre == ""
+                          price.prixlitre == undefined ||
+                          price.prixlitre * 1 == 0 ||
+                          price.prixlitre == ""
                             ? contenu[index].prixlitre
                             : price.prixlitre * 1,
                         contenu: contenu,
@@ -3784,7 +3860,6 @@ exports.getCommandeBetween2Dates = async (req, res) => {
                   data: notDupl,
                 });
                 for (const com of notDupl) {
-
                   await db.commande.update(
                     {
                       contenu: com.contenu,
@@ -3853,19 +3928,25 @@ exports.getCommandeTdbByProduct = async (req, res) => {
   } else {
     whereStatement.type = req.query.type;
   }
-/** if (req.query.deb && req.query.fin) {
+  /** if (req.query.deb && req.query.fin) {
      whereStatement.dateCom = {
        [Op.gte]: moment(req.query.deb),
        [Op.lte]: moment(req.query.fin),
      };
    } */
-  let {rows} = await res.respond(
+  let { rows } = await res.respond(
     db.commande.findAndCountAll({
       where: whereStatement,
     })
-  )
+  );
 
-  res.send({ nextId: 1, rows: rows, totalItems: 1000, totalPages: 100, currentPage: 0 });
+  res.send({
+    nextId: 1,
+    rows: rows,
+    totalItems: 1000,
+    totalPages: 100,
+    currentPage: 0,
+  });
 };
 exports.getCommandeTdbByProducts = async (req, res) => {
   var whereStatement = {};
@@ -3873,70 +3954,76 @@ exports.getCommandeTdbByProducts = async (req, res) => {
   let cmd = [];
   whereStatement.type = ["vente-cva", "credit-cva"];
   if (req.query.deb && req.query.fin) {
-     whereStatement.dateCom = {
-       [Op.gte]: moment(req.query.deb),
-       [Op.lte]: moment(req.query.fin),
-     };
-   }
-   let x =await res.respond(
-    db.commande.findAndCountAll({
-      where: whereStatement,
-    })
-  ).then(async ({ rows, count }) => {
-    console.log('rows',rows);
-    for (const r of rows) {
-     let x = r.contenu.map(e => e.id);
-     let index = x.indexOf(Number(req.query.id));
-      if (index != -1) {
-     cmd.push({
-      id: r.id,
-      dateCom: r.dateCom,
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
-      type: r.type,
-      status: r.status,
-      contenu: [r.contenu[index]]
-     });
-      }
+    whereStatement.dateCom = {
+      [Op.gte]: moment(req.query.deb),
+      [Op.lte]: moment(req.query.fin),
     };
-   
-  })
+  }
+  let x = await res
+    .respond(
+      db.commande.findAndCountAll({
+        where: whereStatement,
+      })
+    )
+    .then(async ({ rows, count }) => {
+      console.log("rows", rows);
+      for (const r of rows) {
+        let x = r.contenu.map((e) => e.id);
+        let index = x.indexOf(Number(req.query.id));
+        if (index != -1) {
+          cmd.push({
+            id: r.id,
+            dateCom: r.dateCom,
+            createdAt: r.createdAt,
+            updatedAt: r.updatedAt,
+            type: r.type,
+            status: r.status,
+            contenu: [r.contenu[index]],
+          });
+        }
+      }
+    })
     .catch(function (err) {
       console.log("NO!!!");
       console.log(err);
     });
 
-
-  res.send({ nextId: 1,rows:cmd, totalItems: 1000, totalPages: 100, currentPage: 0 });
+  res.send({
+    nextId: 1,
+    rows: cmd,
+    totalItems: 1000,
+    totalPages: 100,
+    currentPage: 0,
+  });
 };
-exports.updateManyCommande = async (req,res,next)=>{
-  console.log('commandes',req.body.commandes);
-  const {commandes} = req.body;
-  if(Array.isArray(commandes)){
-     await sequelize
-    .transaction(async (t) => {
-      if (commandes.length > 0) {
-        for (const c of commandes) {
-          await db.commande.update(
-            {
-              contenu: c.contenu
-            },
-            { transaction: t, where: { id: Number(c.id) } }
-          );
+exports.updateManyCommande = async (req, res, next) => {
+  console.log("commandes", req.body.commandes);
+  const { commandes } = req.body;
+  if (Array.isArray(commandes)) {
+    await sequelize
+      .transaction(async (t) => {
+        if (commandes.length > 0) {
+          for (const c of commandes) {
+            await db.commande.update(
+              {
+                contenu: c.contenu,
+              },
+              { transaction: t, where: { id: Number(c.id) } }
+            );
+          }
         }
-      }
-    })
-    .then(function (result) {
-      res.send({
-        message: "Ok!!!",
+      })
+      .then(function (result) {
+        res.send({
+          message: "Ok!!!",
+        });
+      })
+      .catch(function (err) {
+        console.log("NO!!!");
+        return next(err);
       });
-    })
-    .catch(function (err) {
-      console.log("NO!!!");
-      return next(err);
-    });
   }
- /** const id = Number(req.body.id);
+  /** const id = Number(req.body.id);
   const contenu = req.body.contenu;
   await sequelize
     .transaction(async (t) => {
@@ -3956,25 +4043,183 @@ exports.updateManyCommande = async (req,res,next)=>{
       console.log("NO!!!");
       return next(err);
     });**/
-}
-
+};
 
 exports.updatePrice = async (req, res, next) => {
   const id = req.body.id;
   const dateCom = req.body.dateCom;
-  console.log(id,dateCom);
-  await db.commande.update(
-        {
-          dateCom: dateCom,
-        },
-        {  where: { id: id } }
-      ).then(function (result) {
-        res.send({
-          message: "prix  mis à jour",
-        });
+  console.log(id, dateCom);
+  await db.commande
+    .update(
+      {
+        dateCom: dateCom,
+      },
+      { where: { id: id } }
+    )
+    .then(function (result) {
+      res.send({
+        message: "prix  mis à jour",
+      });
     })
     .catch(function (err) {
       console.log("une erreur s'est produite !!!");
       return next(err);
     });
+};
+const totalDevente = (arr) => {
+  return (
+    calculateTotalX(
+      arr?.map((product) => {
+        return isSpecialProductHandle(product)
+          ? product.prixqttccvente *
+              product.quantityParProduct *
+              product.qttccpvente +
+              product.prixVente * product.qttbylitre
+          : product.prixVente * product.quantityParProduct;
+      })
+    ) +
+    calculateTotalX(
+      arr?.map((product) => {
+        return product.prixParCC * product.qttByCC;
+      })
+    )
+  );
+};
+exports.getCommandeByCategory = async (req, res) => {
+  const { rows: categoriesList } = await db.category.findAndCountAll();
+  const categories = categoriesList.map((c) => c.name);
+  var whereStatement = {};
+
+  let cmd = [];
+  whereStatement.type = ["vente-cva", "credit-cva"];
+  if (req.query.date) {
+    whereStatement.dateCom = moment(req.query.date).format("YYYY-MM-DD");
+  } else {
+    whereStatement.dateCom = moment().format("YYYY-MM-DD");
+  }
+
+  let x = await res
+    .respond(
+      db.commande.findAndCountAll({
+        where: whereStatement,
+      })
+    )
+    .then(async ({ rows, count }) => {
+      console.log("rows", rows);
+      for (const r of rows) {
+        console.log(r);
+        if (r.isdeleted == null) {
+          r.contenu.map((c) => cmd.push(c));
+        }
+      }
+
+      const categoryTotals = categories.reduce((totals, category) => {
+        const commandes = cmd.filter(
+          (product) => product.category.name === category
+        );
+        totals.push({
+          id: Math.random(100000),
+          category,
+          commandes: commandes,
+          total: commandes.length,
+          prixTotal: totalDevente(commandes),
+        });
+        return totals;
+      }, []);
+      return categoryTotals;
+    })
+    .catch(function (err) {
+      console.log("NO!!!");
+      console.log(err);
+    });
+  res.send({
+    nextId: 1,
+    rows: x,
+    totalItems: 1000,
+    totalPages: 100,
+    currentPage: 0,
+  });
+};
+
+exports.getUnPaidCredit = async (req, res) => {
+  res.send(
+    getPagingData(
+      await res.respond(
+        db.commande.findAndCountAll({
+          where: {
+            status: false,
+            type: ["vente-depot-credit", "credit-cva"],
+            dateCom: {
+              [Op.gte]: moment(req.query.deb),
+              [Op.lte]: moment(req.query.fin),
+            },
+          },
+          include: ["emprunter"],
+        })
+      ),
+      0,
+      10000
+    )
+  );
+};
+
+exports.getCreditTdb = async (req, res) => {
+  let x = await res
+    .respond(
+      db.commande.findAndCountAll({
+        where: {
+          status: false,
+          type: ["vente-depot-credit", "credit-cva"],
+        },
+        include: ["emprunter"],
+      })
+    )
+    .then(async ({ rows, count }) => {
+      // console.log("rows", rows);
+      const groupedData = {};
+      for (let i = 0; i < rows.length; i++) {
+        const commande = rows[i];
+        const emprunterName = _.isNull(commande.emprunter)
+          ? "Inconnu"
+          : commande.emprunter.name.trim();
+
+        if (!groupedData[emprunterName]) {
+          groupedData[emprunterName] = {
+            id: i + 1,
+            emprunter: _.isNull(commande.emprunter)
+              ? {
+                  id: Math.random(8888),
+                  name: "Inconnu",
+                }
+              : commande.emprunter,
+            contenu: commande.contenu.map((produit) => ({
+              ...produit,
+              dateCom: commande.dateCom,
+            })),
+          };
+        } else {
+          groupedData[emprunterName].contenu = groupedData[
+            emprunterName
+          ].contenu.concat(
+            commande.contenu.map((produit) => ({
+              ...produit,
+              dateCom: commande.dateCom,
+            }))
+          );
+        }
+      }
+      const mergedData = Object.values(groupedData);
+      return mergedData;
+    })
+    .catch(function (err) {
+      console.log("NO!!!");
+      console.log(err);
+    });
+  res.send({
+    nextId: 1,
+    rows: x,
+    totalItems: 1000,
+    totalPages: 100,
+    currentPage: 0,
+  });
 };
