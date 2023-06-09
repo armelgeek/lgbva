@@ -64,9 +64,15 @@ const decrementDecrement = (realproduct, qttcc, qtt = 0) => {
       realproduct.quantityCCCVA -= Number(qttcc);
     }
   }
+
+  
+
   let x = moins + Number(qtt);
-  console.log(x);
   realproduct.quantityBruteCVA -= x;
+
+  if (realproduct.quantityCCCVA < 0) {
+    realproduct.quantityCCCVA = 0;
+  }
 };
 const increment = (realproduct, qttcc=0, qtt = 0, type = "inc") => {
   var moins = 0;
@@ -387,6 +393,7 @@ const incrementX = (realproduct, qttcc, qtt = 0, qttlitre, type = "inc") => {
     realproduct.quantityBruteCVA += tt;
   }
 };
+
 const decrementX = (realproduct, qttcc, qtt = 0, qttlitre, type = "dec") => {
   let moins = 0,
     moinslitre = 0,
@@ -469,10 +476,11 @@ const decrementX = (realproduct, qttcc, qtt = 0, qttlitre, type = "dec") => {
           Number(realproduct.quantityCCCVA) + Number(qttcc);
       }
     }
-    let mm = Number(moins);
-    if (Number(mm) >= Number(condsize)) {
-      moinscond = Math.floor(mm / Number(condsize));
-      restecond = Number(mm) - Number(condsize) * moinscond;
+
+    let addcond = Number(realproduct.condval) + Number(qttcc) + Number(qtt);
+    if (Number(addcond) >= Number(condsize)) {
+      moinscond = Math.floor(addcond / Number(condsize));
+      restecond = Number(qttcc) + Number(qtt) - Number(condsize) * moinscond;
       if (realproduct.condval + restecond >= Number(condsize)) {
         moinscond += 1;
         realproduct.condval =
@@ -481,157 +489,22 @@ const decrementX = (realproduct, qttcc, qtt = 0, qttlitre, type = "dec") => {
         realproduct.condval = Number(realproduct.condval) + restecond;
       }
     } else {
-      if (realproduct.condval + Number(mm) >= Number(condsize)) {
+      if (realproduct.condval + Number(qttcc) + Number(qtt) >= Number(condsize)) {
         moinscond += 1;
         realproduct.condval =
-          Number(realproduct.condval) + Number(mm) - Number(condsize);
+          Number(realproduct.condval) + Number(qttcc) + Number(qtt) - Number(condsize);
       } else {
-        realproduct.condval = Number(realproduct.condval) + Number(mm);
+        realproduct.condval =
+          Number(realproduct.condval) + Number(qttcc) + Number(qtt);
       }
     }
-    realproduct.quantityBruteCVA += moinscond;
-
-    let mna = Number(qtt);
-    if (Number(mna) >= Number(condsize)) {
-      moinslitre = Math.floor(Number(mna) / Number(condsize));
-      restelitre = Number(mna) - Number(condsize) * moins;
-      if (realproduct.condval - restelitre < 0) {
-        let diffo = Number(reste) - Number(realproduct.condval);
-        realproduct.condval = Number(condsize) - Number(diffo);
-        moinslitre += 1;
-      } else {
-        realproduct.condval = Number(realproduct.condval) - restelitre;
-      }
-    } else {
-      if (realproduct.condval - Number(mna) < 0) {
-        let diffcco = Number(mna) - Number(realproduct.condval);
-        realproduct.condval = Number(condsize) - Number(diffcco);
-        moinslitre += 1;
-      } else {
-        realproduct.condval = realproduct.condval - Number(mna);
-      }
-    }
-    realproduct.quantityBruteCVA -= moinslitre;
+    realproduct.quantityBruteCVA -= moinscond;
     realproduct.quantityBruteCVA += qttlitre;
-  } else if (type == "incdec") {
-    // mis erreur ici:
-    let moins = 0,
-      moinscond = 0;
-    let reste = 0,
-      restecond = 0;
-    let dose = realproduct.condml;
-    let condsize = realproduct.condsize;
-
-    let add = Number(realproduct.quantityCCCVA) + Number(qttcc);
-    if (Number(add) >= Number(dose)) {
-      moins = Math.floor(add / Number(dose));
-      reste = Number(qttcc) - Number(dose) * moins;
-      if (realproduct.quantityCCCVA + reste >= Number(dose)) {
-        moins += 1;
-        realproduct.quantityCCCVA =
-          Number(realproduct.quantityCCCVA) + reste - Number(dose);
-      } else {
-        realproduct.quantityCCCVA = Number(realproduct.quantityCCCVA) + reste;
-      }
-    } else {
-      if (realproduct.quantityCCCVA + Number(qttcc) >= Number(dose)) {
-        moins += 1;
-        realproduct.quantityCCCVA =
-          Number(realproduct.quantityCCCVA) + Number(qttcc) - Number(dose);
-      } else {
-        realproduct.quantityCCCVA =
-          Number(realproduct.quantityCCCVA) + Number(qttcc);
-      }
-    }
-    let mm = Number(moins);
-    if (Number(mm) >= Number(condsize)) {
-      moinscond = Math.floor(mm / Number(condsize));
-      restecond = Number(mm) - Number(condsize) * moinscond;
-      if (realproduct.condval + restecond >= Number(condsize)) {
-        moinscond += 1;
-        realproduct.condval =
-          Number(realproduct.condval) + restecond - Number(condsize);
-      } else {
-        realproduct.condval = Number(realproduct.condval) + restecond;
-      }
-    } else {
-      if (realproduct.condval + Number(mm) >= Number(condsize)) {
-        moinscond += 1;
-        realproduct.condval =
-          Number(realproduct.condval) + Number(mm) - Number(condsize);
-      } else {
-        realproduct.condval = Number(realproduct.condval) + Number(mm);
-      }
-    }
-    realproduct.quantityBruteCVA += moinscond;
-
-    let mna = Number(qtt);
-    if (Number(mna) >= Number(condsize)) {
-      moinslitre = Math.floor(Number(mna) / Number(condsize));
-      restelitre = Number(mna) - Number(condsize) * moins;
-      if (realproduct.condval - restelitre < 0) {
-        let diffo = Number(reste) - Number(realproduct.condval);
-        realproduct.condval = Number(condsize) - Number(diffo);
-        moinslitre += 1;
-      } else {
-        realproduct.condval = Number(realproduct.condval) - restelitre;
-      }
-    } else {
-      if (realproduct.condval - Number(mna) < 0) {
-        let diffcco = Number(mna) - Number(realproduct.condval);
-        realproduct.condval = Number(condsize) - Number(diffcco);
-        moinslitre += 1;
-      } else {
-        realproduct.condval = realproduct.condval - Number(mna);
-      }
-    }
-    realproduct.quantityBruteCVA -= moinslitre + qttlitre;
-  } else {
-    if (Number(qttcc) >= Number(dose)) {
-      moins = Math.floor(Number(qttcc) / Number(dose));
-      reste = Number(qttcc) - Number(dose) * moins;
-      if (realproduct.quantityCCCVA - reste < 0) {
-        let diff = Number(reste) - Number(realproduct.quantityCCCVA);
-        realproduct.quantityCCCVA = Number(dose) - Number(diff);
-        moins += 1;
-      } else {
-        realproduct.quantityCCCVA = Number(realproduct.quantityCCCVA) - reste;
-      }
-    } else {
-      if (realproduct.quantityCCCVA - Number(qttcc) < 0) {
-        let diff = Number(qttcc) - Number(realproduct.quantityCCCVA);
-        console.log(Number(qttcc), realproduct.quantityCCCVA, diff);
-        realproduct.quantityCCCVA = Number(dose) - Number(diff);
-        moins += 1;
-      } else {
-        realproduct.quantityCCCVA -= Number(qttcc);
-      }
-    }
-
-    let mn = Number(moins) + Number(qtt);
-    if (Number(mn) >= Number(condsize)) {
-      moinslitre = Math.floor(Number(mn) / Number(condsize));
-      restelitre = Number(mn) - Number(condsize) * moinslitre;
-      if (realproduct.condval - restelitre < 0) {
-        let diffo = Number(restelitre) - Number(realproduct.condval);
-        realproduct.condval = Number(condsize) - Number(diffo);
-        moinslitre += 1;
-      } else {
-        realproduct.condval = Number(realproduct.condval) - restelitre;
-      }
-    } else {
-      if (realproduct.condval - Number(mn) < 0) {
-        let diffcco = Number(mn) - Number(realproduct.condval);
-        realproduct.condval = Number(condsize) - Number(diffcco);
-        moinslitre += 1;
-      } else {
-        realproduct.condval = realproduct.condval - Number(mn);
-      }
-    }
-    let mns = moinslitre + qttlitre;
-    realproduct.quantityBruteCVA -= mns;
   }
+
+  return realproduct;
 };
+
 const decrement = (realproduct, qttcc, qtt = 0, type = "dec") => {
   let moins = 0,
     reste = 0;
