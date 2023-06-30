@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "electron": "^12.0.1",
-    "electron-builder": "^19.6.1",
+    "electron-builder": "^24.3.0",
     "http-server": "^0.10.0"
   },
   "dependencies": {
