@@ -4092,8 +4092,9 @@ exports.getCommandeByCategory = async (req, res) => {
 
   let cmd = [];
   whereStatement.type = ["vente-cva", "credit-cva"];
+  var momentDate = moment(req.query.date, "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ");
   if (req.query.date) {
-    whereStatement.dateCom = moment(req.query.date).format("YYYY-MM-DD");
+    whereStatement.dateCom = momentDate.format("YYYY-MM-DD");
   } else {
     whereStatement.dateCom = moment().format("YYYY-MM-DD");
   }
