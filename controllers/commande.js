@@ -4224,3 +4224,140 @@ exports.getCreditTdb = async (req, res) => {
     currentPage: 0,
   });
 };
+
+exports.getLastCommandeOfProducts = async (req, res) => {
+  const today = moment();
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = (page - 1) * limit;
+
+  if (moment(req.query.startDate, "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ").isSame(today)) {
+    const { rows: products, count: totalCount } = await db.product.findAndCountAll();
+    const totalPages = Math.ceil(totalCount / limit);
+    res.send({
+      nextId: 1,
+      rows: products,
+      totalItems: totalCount,
+      totalPages: totalPages,
+      currentPage: page,
+    });
+  } else {
+    const { rows: products, count: totalCount } = await db.product.findAndCountAll({
+      limit: limit,
+      offset: offset,
+    });
+    const totalPages = Math.ceil(totalCount / limit);
+    const momentDate = moment(req.query.startDate, "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ");
+    const results = [];
+
+    const searchCommande = async (startDate, product) => {
+      let productFound = false; // Variable de contrôle pour indiquer si le produit a été trouvé
+
+      const commandes = await db.commande.findAndCountAll({
+        where: {
+          type: ["vente-cva", "credit-cva"],
+          dateCom: {
+            [Op.lte]: startDate,
+          },
+        },
+        order: [['dateCom', 'DESC']]
+      });
+
+      if (commandes.count > 0 && !productFound) {
+        for (const r of commandes.rows) {
+          const contenu = [...r.contenu];
+          const found = contenu.find((con) => con.id === Number(product.id));
+          if (found) {
+            results.push({
+              dateCom: moment(r.dateCom).format('DD MMMM YYYY'), // Formater la dateCom selon le format "jour mois année"
+              ...found,
+            });
+            productFound = true; // Le produit a été trouvé, on met à jour la variable de contrôle
+            break; // Sortir de la boucle une fois que le produit est trouvé
+          }
+        }
+      }
+
+      const previousDay = startDate.clone().subtract(1, 'day');
+      if (!productFound && previousDay.isSameOrAfter(moment().startOf('day'))) {
+        searchCommande(previousDay, product); // Recherche récursive uniquement si le produit n'a pas encore été trouvé et que la date précédente est supérieure ou égale à aujourd'hui
+      }
+
+      // Si aucun produit n'a été trouvé, ajouter le produit à `results` avec les valeurs par défaut
+      if (!productFound) {
+        results.push({
+          dateCom: "N/A",
+          id: product.id,
+          name: product.name,
+          type: product.type,
+          condml: product.condml,
+          remise: product.remise,
+          condval: product.condval,
+          datePer: product.datePer,
+          qttByCC: product.qttByCC,
+          category: product.category,
+          condsize: product.condsize,
+          createdAt: product.createdAt,
+          prixParCC: product.prixParCC,
+          prixVente: product.prixVente,
+          prixlitre: product.prixlitre,
+          refSortie: product.refSortie,
+          updatedAt: product.updatedAt,
+          categoryId: product.categoryId,
+          correction: product.correction,
+          qttbybrute: product.qttbybrute,
+          qttbylitre: product.qttbylitre,
+          quantityCC: product.quantityCC,
+          condmldepot: product.condmldepot,
+          correctionl: product.correctionl,
+          doseDefault: product.doseDefault,
+          fournisseur: product.fournisseur,
+          qttccpvente: product.qttccpvente,
+          refQtSortie: product.refQtSortie,
+          uniteMesure: product.uniteMesure,
+          condvaldepot: product.condvaldepot,
+          correctionml: product.correctionml,
+          correctiontl: product.correctiontl,
+          qttByCCDepot: product.qttByCCDepot,
+          sortiedepots: product.sortiedepots,
+          condsizedepot: product.condsizedepot,
+          correctiontml: product.correctiontml,
+          fournisseurId: product.fournisseurId,
+          quantityBrute: product.quantityBrute,
+          quantityCCCVA: product.quantityCCCVA,
+          correctiontype: product.correctiontype,
+          prixqttccvente: product.prixqttccvente,
+          conditionnement: product.conditionnement,
+          doseRestantEnMg: product.doseRestantEnMg,
+          prixFournisseur: product.prixFournisseur,
+          prixVaccinateur: product.prixVaccinateur,
+          datedecorrection: product.datedecorrection,
+          qttccpventedepot: product.qttccpventedepot,
+          quantityBruteCVA: product.quantityBruteCVA,
+          remisePerProduct: product.remisePerProduct,
+          qttyspecificmirror: product.qttyspecificmirror,
+          quantityParProduct: product.quantityParProduct,
+          prixqttccventedepot: product.prixqttccventedepot,
+          quantityParProductDepot: product.quantityParProductDepot
+        });
+
+      }
+    };
+
+
+    for (const product of products) {
+      await searchCommande(momentDate, product);
+    }
+
+    const totalItems = totalCount; // Le nombre total d'éléments
+    const currentPage = page; // La page actuelle
+    res.send({
+      nextId: 1,
+      rows: results,
+      totalItems: totalItems,
+      totalPages: totalPages,
+      currentPage: currentPage,
+    });
+  }
+};
+
