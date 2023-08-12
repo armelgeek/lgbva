@@ -101,8 +101,6 @@ const router = Router();
   router.get("/benefices", commandeController.beneficeEntre2Dates);
   router.get("/reste-a-payer", commandeController.resteApayerEntre2Dates);
 
-  router.post("/signup", userController.signup);
-  router.post("/signin", userController.signin);
   router.get(
     "/sortie/depot/by/product",
     sortieDepotController.getSortieDepotActual
@@ -124,3 +122,4 @@ const router = Router();
     res.json("okay");
   });
   router.get("/credit-tdb", commandeController.getCreditTdb);
+  router.get('/last-product-commande', commandeController.getLastCommandeOfProducts);
