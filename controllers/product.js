@@ -1,6 +1,4 @@
 const db = require("../models/index.js");
-const Product = require("../models/product.js");
-const convertisseur = require("./utils/Convertisseur");
 const moment = require("moment");
 const { Op } = require("sequelize");
 const { getPagingData } = require("../lib/api/getList/index.js");
@@ -191,26 +189,29 @@ exports.getProductPerime = async (req, res) => {
   );
 };
 exports.getProductRuptureStock = async (req, res) => {
-  const data = await res.respond(db.parametre.findOne({
-    where:{
-      id:1
-    }
-  }));
-  res.send(
-    getPagingData(
-      await res.respond(
-        db.product.findAndCountAll({
-          where: {
-            quantityBrute: {
-              [Op.lte]: data.nb_produits || 10,
-            },
-          },
-        })
-      ),
-      0,
-      10
-    )
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const offset = (page - 1) * limit;
+  const {rows, count} = await res.respond(
+    db.product.findAndCountAll({
+      limit: limit,
+      offset: offset,
+      where: {
+        quantityBrute: {
+          [Op.lte]: 5,
+        },
+      },
+      order: [['quantityBrute', 'DESC']]
+    })
   );
+  const totalPages = Math.ceil(count / limit);
+  res.send({
+    nextId: 1,
+    rows: rows,
+    totalItems: count,
+    totalPages: totalPages,
+    currentPage: page,
+  });
 };
 
 exports.getProductByFournisseur = async (req, res) => {
