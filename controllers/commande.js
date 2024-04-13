@@ -4094,40 +4094,47 @@ exports.getCommandeByCategory = async (req, res) => {
   whereStatement.type = ["vente-cva", "credit-cva"];
   var momentDate = moment(req.query.date, "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ");
   if (req.query.date) {
-    whereStatement.dateCom = momentDate.format("YYYY-MM-DD");
+    whereStatement.dateCom = {
+      [Op.gte]: moment(momentDate.format("YYYY-MM-DD")).startOf('day').toDate(),
+      [Op.lte]: moment(momentDate.format("YYYY-MM-DD")).endOf('day').toDate()
+    }
   } else {
-    whereStatement.dateCom = moment().format("YYYY-MM-DD");
+    whereStatement.dateCom = {
+      [Op.gte]: moment().startOf('day').toDate(),
+      [Op.lte]: moment().endOf('day').toDate()
+    }
   }
-
   let x = await res
     .respond(
       db.commande.findAndCountAll({
-        where: whereStatement,
+        where: whereStatement
       })
     )
-    .then(async ({ rows, count }) => {
+    .then(({rows,count}) => {
       console.log("rows", rows);
-      for (const r of rows) {
-        console.log(r);
-        if (r.isdeleted == null) {
-          r.contenu.map((c) => cmd.push(c));
+        for (const r of rows) {
+          console.log(r);
+          if (r.isdeleted == null) {
+            r.contenu.map((c) => cmd.push(c));
+          }
         }
-      }
-
-      const categoryTotals = categories.reduce((totals, category) => {
-        const commandes = cmd.filter(
-          (product) => product.category.name === category
-        );
-        totals.push({
-          id: Math.random(100000),
-          category,
-          commandes: commandes,
-          total: commandes.length,
-          prixTotal: totalDevente(commandes),
-        });
-        return totals;
-      }, []);
-      return categoryTotals;
+  
+        const categoryTotals = categories.reduce((totals, category) => {
+          const commandes = cmd.filter(
+            (product) => product.category.name === category
+          );
+          totals.push({
+            id: Math.random(100000),
+            category,
+            commandes: commandes,
+            total: commandes.length,
+            prixTotal: totalDevente(commandes),
+          });
+          return totals;
+        }, []);
+        return categoryTotals;
+         
+      return []
     })
     .catch(function (err) {
       console.log("NO!!!");
