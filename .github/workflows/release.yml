@@ -20,7 +20,7 @@ jobs:
       - name: Use Node.js on windows
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '20'
       - name: Cache file
         uses: actions/cache@v2
         with:
